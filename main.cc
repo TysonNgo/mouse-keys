@@ -48,15 +48,20 @@ POINT getXYDirection(int numDir)
     }
 }
 
-void Click()
+void click(bool press=true)
 {
+
     INPUT input;
     input.type = INPUT_MOUSE;
-    input.mi.dwFlags = (
+    input.mi.dwFlags = 
         MOUSEEVENTF_ABSOLUTE |
-        MOUSEEVENTF_LEFTDOWN |
-        MOUSEEVENTF_LEFTUP
-    );
+        MOUSEEVENTF_LEFTDOWN;
+
+    if (press)
+    {
+        input.mi.dwFlags = input.mi.dwFlags | MOUSEEVENTF_LEFTUP;
+    }
+
     SendInput(1, &input, sizeof(INPUT));
 }
 
@@ -88,9 +93,9 @@ void RegisterHotKeys(){
     RegisterHotKey(NULL, 19, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_NUMPAD9);
 
 
-    RegisterHotKey(NULL, 0, MOD_CONTROL, VK_NUMPAD0);
-    RegisterHotKey(NULL, 10, MOD_CONTROL | MOD_ALT, VK_NUMPAD0);
-    RegisterHotKey(NULL, 5, MOD_CONTROL | MOD_NOREPEAT, VK_NUMPAD5);
+    RegisterHotKey(NULL, 0, MOD_CONTROL, VK_NUMPAD0); // mouse hold
+    RegisterHotKey(NULL, 10, MOD_CONTROL | MOD_ALT, VK_NUMPAD0); 
+    RegisterHotKey(NULL, 5, MOD_CONTROL | MOD_NOREPEAT, VK_NUMPAD5); // mouse press
 
     // decrease cursor speed
     RegisterHotKey(NULL, 1000, MOD_CONTROL | MOD_NOREPEAT, VK_DIVIDE);
@@ -108,8 +113,11 @@ void handleHotKey(int hotkey){
 
     switch (hotkey)
     {
+        case 0:
+            click(false);
+            break;
         case 5:
-            Click();
+            click();
             break;
         case 7: case 8: case 9:
         case 4:         case 6:
@@ -148,7 +156,6 @@ void handleHotKey(int hotkey){
                 default:
                     break;
             }
-            std::cout << dir.x << " "<<dir.y << std::endl;
             SetCursorPos(dir.x, dir.y);
             break;
         case 1000: case 1001:
