@@ -17,14 +17,14 @@ UINT WM_TASKBAR = 0;
 HWND hwnd;
 HMENU hmenu;
 NOTIFYICONDATA notifyIconData;
-TCHAR szTIP[64] = TEXT("asdasddas");
-char szClassName[] = "zczxzzxczxczxc";
+TCHAR szTIP[64] = TEXT("Tyson Mouse Keys");
+char szClassName[] = "Mouse Keys";
 
 
 const int CURSOR_MOVE_MIN = 25;
 const int CURSOR_MOVE_MAX = 500;
 const int CURSOR_STEP = 25;
-const int CURSOR_DEFAULT = 50;
+const int CURSOR_DEFAULT = 100;
 
 int cursorMove = CURSOR_DEFAULT; // pixels to move cursor
 ///////
@@ -94,7 +94,7 @@ void RegisterHotKeys(){
     RegisterHotKey(NULL, 8, MOD_CONTROL, VK_NUMPAD8);
     RegisterHotKey(NULL, 9, MOD_CONTROL, VK_NUMPAD9);
 
-    // 
+    // cursor movement in the foreground window with numpad directions (edges and center)
     RegisterHotKey(NULL, 11, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_NUMPAD1);
     RegisterHotKey(NULL, 12, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_NUMPAD2);
     RegisterHotKey(NULL, 13, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_NUMPAD3);
@@ -238,6 +238,8 @@ int WINAPI WinMain(
 
     initNotifyIconData();
     ShowWindow(hwnd, nCmdShow);
+    ShowWindow(hwnd, SW_HIDE);
+    ShowWindow(GetConsoleWindow(), SW_HIDE);
 
     RegisterHotKeys();
 
@@ -261,12 +263,6 @@ LRESULT CALLBACK WndProc (
     WPARAM wParam,
     LPARAM lParam
 ){
-    /*MSG msg = {0};
-    while (GetMessage(&msg, NULL, 0, 0) != 0)
-    {
-        
-    } */
-
     if (message == WM_TASKBAR && !IsWindowVisible(hwnd))
     {
         minimize();
@@ -281,7 +277,7 @@ LRESULT CALLBACK WndProc (
         case WM_CREATE:
             ShowWindow(hwnd, SW_HIDE);
             hmenu = CreatePopupMenu();
-            AppendMenu(hmenu, MF_STRING, ID_TRAY_EXIT, TEXT("exit"));
+            AppendMenu(hmenu, MF_STRING, ID_TRAY_EXIT, TEXT("Exit"));
             break;
         case WM_SYSCOMMAND:
             switch (wParam & 0xFFF0)
@@ -302,11 +298,11 @@ LRESULT CALLBACK WndProc (
                 break;
             }
 
-            if (lParam == WM_LBUTTONUP)
+            /*if (lParam == WM_LBUTTONUP)
             {
                 restore();
             }
-            else if (lParam == WM_RBUTTONDOWN)
+            else*/ if (lParam == WM_RBUTTONDOWN)
             {
                 POINT curPoint;
                 GetCursorPos(&curPoint);
