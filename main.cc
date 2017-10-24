@@ -20,11 +20,13 @@ NOTIFYICONDATA notifyIconData;
 TCHAR szTIP[64] = TEXT("asdasddas");
 char szClassName[] = "zczxzzxczxczxc";
 
-int cursorMove = 50; // pixels to move cursor
+
 const int CURSOR_MOVE_MIN = 25;
 const int CURSOR_MOVE_MAX = 500;
 const int CURSOR_STEP = 25;
+const int CURSOR_DEFAULT = 50;
 
+int cursorMove = CURSOR_DEFAULT; // pixels to move cursor
 ///////
 void SetRelCursorPos(int x, int y){
     POINT pt;
@@ -46,20 +48,31 @@ POINT getXYDirection(int numDir)
             direction++;
         }
     }
+    return POINT{0, 0};
 }
 
-void click(bool press=true)
+void click(bool left=true, bool press=true)
 {
 
     INPUT input;
     input.type = INPUT_MOUSE;
-    input.mi.dwFlags = 
-        MOUSEEVENTF_ABSOLUTE |
-        MOUSEEVENTF_LEFTDOWN;
-
-    if (press)
+    input.mi.dwFlags = MOUSEEVENTF_ABSOLUTE;
+    
+    if (left)
     {
-        input.mi.dwFlags = input.mi.dwFlags | MOUSEEVENTF_LEFTUP;
+        input.mi.dwFlags = input.mi.dwFlags | MOUSEEVENTF_LEFTDOWN;
+        if (press)
+        {
+            input.mi.dwFlags = input.mi.dwFlags | MOUSEEVENTF_LEFTUP;
+        }
+    }
+    else
+    {
+        input.mi.dwFlags = input.mi.dwFlags | MOUSEEVENTF_RIGHTDOWN;
+        if (press)
+        {
+            input.mi.dwFlags = input.mi.dwFlags | MOUSEEVENTF_RIGHTUP;
+        }
     }
 
     SendInput(1, &input, sizeof(INPUT));
@@ -101,6 +114,8 @@ void RegisterHotKeys(){
     RegisterHotKey(NULL, 1000, MOD_CONTROL | MOD_NOREPEAT, VK_DIVIDE);
     // increase cursor speed
     RegisterHotKey(NULL, 1001, MOD_CONTROL | MOD_NOREPEAT, VK_MULTIPLY);
+    // reset cursor speed to default
+    RegisterHotKey(NULL, 1002, MOD_CONTROL | MOD_NOREPEAT, VK_SUBTRACT);
 }
 
 void handleHotKey(int hotkey){
@@ -114,7 +129,7 @@ void handleHotKey(int hotkey){
     switch (hotkey)
     {
         case 0:
-            click(false);
+            click(true, false);
             break;
         case 5:
             click();
@@ -138,7 +153,7 @@ void handleHotKey(int hotkey){
                     dir.x = (fgWindow.left+fgWindow.right)/2;
                     break;
                 case 1:
-                    dir.x = fgWindow.right;
+                    dir.x = fgWindow.right-5;
                     break;
             }
 
@@ -148,10 +163,10 @@ void handleHotKey(int hotkey){
                     dir.y = fgWindow.top;
                     break;
                 case 0:
-                    dir.y = (fgWindow.top+fgWindow.bottom)/2;
+                    dir.y = (fgWindow.top+fgWindow.bottom-5)/2;
                     break;
                 case 1:
-                    dir.y = fgWindow.bottom;
+                    dir.y = fgWindow.bottom-5;
                     break;
                 default:
                     break;
@@ -162,6 +177,9 @@ void handleHotKey(int hotkey){
             cursorMove = (hotkey % 10) ? 
                 std::min(CURSOR_MOVE_MAX, cursorMove+CURSOR_STEP) :
                 std::max(CURSOR_MOVE_MIN, cursorMove-CURSOR_STEP);
+            break;
+        case 1002:
+            cursorMove = CURSOR_DEFAULT;
             break;
     }
 }
