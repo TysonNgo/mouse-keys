@@ -21,6 +21,7 @@ TCHAR szTIP[64] = TEXT("asdasddas");
 char szClassName[] = "zczxzzxczxczxc";
 
 int cursorMove = 50; // pixels to move cursor
+const int CURSOR_MOVE_MIN = 25;
 const int CURSOR_MOVE_MAX = 500;
 const int CURSOR_STEP = 25;
 
@@ -31,7 +32,7 @@ void SetRelCursorPos(int x, int y){
     SetCursorPos(pt.x+x, pt.y+y);
 }
 
-void moveCursor(int numDir)
+POINT getXYDirection(int numDir)
 {
     int direction = 1;
     for (int y=1; y>=-1; y--)
@@ -40,8 +41,7 @@ void moveCursor(int numDir)
         {
             if (direction == numDir)
             {
-                SetRelCursorPos(x*cursorMove, y*cursorMove);
-                return;
+                return POINT{x, y};
             }
             direction++;
         }
@@ -100,7 +100,9 @@ void RegisterHotKeys(){
 
 void handleHotKey(int hotkey){
     RECT fgWindow;
-    if (hotkey >= 11 && hotkey <=19){
+    POINT dir;
+    if (hotkey >= 11 && hotkey <=19)
+    {
         GetWindowRect(GetForegroundWindow(), &fgWindow);
     }
 
@@ -112,13 +114,47 @@ void handleHotKey(int hotkey){
         case 7: case 8: case 9:
         case 4:         case 6:
         case 1: case 2: case 3:
-            moveCursor(hotkey);
+            dir = getXYDirection(hotkey);
+            SetRelCursorPos(dir.x*cursorMove, dir.y*cursorMove);
             break;
-        case 1000:
-            cursorMove = std::max(0, cursorMove-CURSOR_STEP);
+        case 17: case 18: case 19:
+        case 14: case 15: case 16:
+        case 11: case 12: case 13:
+            dir = getXYDirection(hotkey % 10);
+            switch (dir.x)
+            {
+                case -1:
+                    dir.x = fgWindow.left;
+                    break;
+                case 0:
+                    dir.x = (fgWindow.left+fgWindow.right)/2;
+                    break;
+                case 1:
+                    dir.x = fgWindow.right;
+                    break;
+            }
+
+            switch (dir.y)
+            {
+                case -1:
+                    dir.y = fgWindow.top;
+                    break;
+                case 0:
+                    dir.y = (fgWindow.top+fgWindow.bottom)/2;
+                    break;
+                case 1:
+                    dir.y = fgWindow.bottom;
+                    break;
+                default:
+                    break;
+            }
+            std::cout << dir.x << " "<<dir.y << std::endl;
+            SetCursorPos(dir.x, dir.y);
             break;
-        case 1001:
-            cursorMove = std::min(CURSOR_MOVE_MAX, cursorMove+CURSOR_STEP);
+        case 1000: case 1001:
+            cursorMove = (hotkey % 10) ? 
+                std::min(CURSOR_MOVE_MAX, cursorMove+CURSOR_STEP) :
+                std::max(CURSOR_MOVE_MIN, cursorMove-CURSOR_STEP);
             break;
     }
 }
