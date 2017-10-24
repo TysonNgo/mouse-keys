@@ -1,6 +1,6 @@
 CXX = g++
 CXXFLAGS = -std=c++14 -Wall -MMD
-EXEC = a
+EXEC = mousekeys
 OBJECTS = main.o
 DEPENDS = ${OBJECTS:.o=.d}
 
