@@ -1,12 +1,32 @@
 #include <windows.h>
 #include <shellapi.h>
-#include <iostream>
 #include <algorithm>
+//#include "debug.h"
+
+#ifdef DEBUG
+#include <iostream>
+using std::cout;
+using std::endl;
+#endif
+
+// I should refactor everything
 
 #define ID_TRAY_APP_ICON  225
 #define ID_TRAY_EXIT      315
 #define WM_SYSICON (WM_USER+1)
 
+#ifndef MOD_ALT
+#define MOD_NOREPEAT 0x0001
+#endif
+#ifndef MOD_CONTROL
+#define MOD_NOREPEAT 0x0002
+#endif
+#ifndef MOD_SHIFT
+#define MOD_NOREPEAT 0x0004
+#endif
+#ifndef MOD_WIN
+#define MOD_NOREPEAT 0x0008
+#endif
 #ifndef MOD_NOREPEAT
 #define MOD_NOREPEAT 0x4000
 #endif
@@ -20,6 +40,7 @@ NOTIFYICONDATA notifyIconData;
 TCHAR szTIP[64] = TEXT("Tyson Mouse Keys");
 char szClassName[] = "Mouse Keys";
 
+POINT savePoints[10];
 
 const int CURSOR_MOVE_MIN = 25;
 const int CURSOR_MOVE_MAX = 500;
@@ -28,7 +49,8 @@ const int CURSOR_DEFAULT = 100;
 
 int cursorMove = CURSOR_DEFAULT; // pixels to move cursor
 ///////
-void SetRelCursorPos(int x, int y){
+void SetRelCursorPos(int x, int y)
+{
     POINT pt;
     GetCursorPos(&pt);
     SetCursorPos(pt.x+x, pt.y+y);
@@ -105,6 +127,29 @@ void RegisterHotKeys(){
     RegisterHotKey(NULL, 18, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_NUMPAD8);
     RegisterHotKey(NULL, 19, MOD_CONTROL | MOD_ALT | MOD_NOREPEAT, VK_NUMPAD9);
 
+    // cursor save states
+    RegisterHotKey(NULL, 20, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD0);
+    RegisterHotKey(NULL, 21, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD1);
+    RegisterHotKey(NULL, 22, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD2);
+    RegisterHotKey(NULL, 23, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD3);
+    RegisterHotKey(NULL, 24, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD4);
+    RegisterHotKey(NULL, 25, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD5);
+    RegisterHotKey(NULL, 26, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD6);
+    RegisterHotKey(NULL, 27, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD7);
+    RegisterHotKey(NULL, 28, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD8);
+    RegisterHotKey(NULL, 29, MOD_WIN | MOD_NOREPEAT, VK_NUMPAD9);
+
+    // cursor move to save states
+    RegisterHotKey(NULL, 30, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD0);
+    RegisterHotKey(NULL, 31, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD1);
+    RegisterHotKey(NULL, 32, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD2);
+    RegisterHotKey(NULL, 33, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD3);
+    RegisterHotKey(NULL, 34, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD4);
+    RegisterHotKey(NULL, 35, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD5);
+    RegisterHotKey(NULL, 36, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD6);
+    RegisterHotKey(NULL, 37, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD7);
+    RegisterHotKey(NULL, 38, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD8);
+    RegisterHotKey(NULL, 39, MOD_CONTROL | MOD_WIN | MOD_NOREPEAT, VK_NUMPAD9);
 
     RegisterHotKey(NULL, 0, MOD_CONTROL, VK_NUMPAD0); // mouse hold
     RegisterHotKey(NULL, 10, MOD_CONTROL | MOD_ALT, VK_NUMPAD0); 
@@ -121,6 +166,7 @@ void RegisterHotKeys(){
 void handleHotKey(int hotkey){
     RECT fgWindow;
     POINT dir;
+    POINT pt;
     if (hotkey >= 11 && hotkey <=19)
     {
         GetWindowRect(GetForegroundWindow(), &fgWindow);
@@ -173,6 +219,25 @@ void handleHotKey(int hotkey){
             }
             SetCursorPos(dir.x, dir.y);
             break;
+        // save states
+        case 27: case 28: case 29:
+        case 24: case 25: case 26:
+        case 21: case 22: case 23:
+        case 20:
+            GetCursorPos(&pt);
+            savePoints[hotkey % 10] = pt;
+            break;
+        // move cursor to saved state
+        case 37: case 38: case 39:
+        case 34: case 35: case 36:
+        case 31: case 32: case 33:
+        case 30:
+            pt = savePoints[hotkey % 10];
+            if (pt.x + pt.y != 0)
+            {
+                SetCursorPos(pt.x, pt.y);
+            }
+            break;
         case 1000: case 1001:
             cursorMove = (hotkey % 10) ? 
                 std::min(CURSOR_MOVE_MAX, cursorMove+CURSOR_STEP) :
@@ -214,7 +279,6 @@ int WINAPI WinMain(
     wincl.lpszMenuName = NULL;
     wincl.cbClsExtra = 0;
     wincl.cbWndExtra = 0;
-    //wincl.hbrBackground = (HBRUSH)(CreateSolidBrush(RGB(255, 255, 255)));
 
     if (!RegisterClassEx (&wincl))
     {
@@ -239,7 +303,9 @@ int WINAPI WinMain(
     initNotifyIconData();
     ShowWindow(hwnd, nCmdShow);
     ShowWindow(hwnd, SW_HIDE);
-    ShowWindow(GetConsoleWindow(), SW_HIDE);
+    #ifndef DEBUG
+        ShowWindow(GetConsoleWindow(), SW_HIDE);
+    #endif
 
     RegisterHotKeys();
 
