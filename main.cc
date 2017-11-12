@@ -418,7 +418,6 @@ void initNotifyIconData()
     notifyIconData.uID = ID_TRAY_APP_ICON;
     notifyIconData.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
     notifyIconData.uCallbackMessage = WM_SYSICON;
-    //notifyIconData.hIcon = (HICON) LoadImage(NULL, TEXT("somethig.ico"))
-    notifyIconData.hIcon = (HICON) LoadIcon(GetModuleHandle(NULL), MAKEINTRESOURCE(ICO1));
+    notifyIconData.hIcon = (HICON) LoadImage(NULL, TEXT("favicon.ico"), IMAGE_ICON, 0, 0, LR_LOADFROMFILE);
     strncpy(notifyIconData.szTip, szTIP, sizeof(szTIP));
 }
